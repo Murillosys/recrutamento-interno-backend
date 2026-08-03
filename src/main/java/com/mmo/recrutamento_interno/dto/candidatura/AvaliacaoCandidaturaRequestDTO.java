@@ -12,7 +12,7 @@ public record AvaliacaoCandidaturaRequestDTO(
         String feedback,
 
         @Min(value = 1, message = "A nota mínima é 1")
-        @Max(value = 5, message = "A nota máxima é 5")
+        @Max(value = 10, message = "A nota máxima é 10")
         Integer notaAvaliacao
 ) {
 }

@@ -27,6 +27,10 @@ CREATE TABLE candidaturas
     status         VARCHAR(20) NOT NULL DEFAULT 'RECEBIDA',
     data_aplicacao TIMESTAMP            DEFAULT CURRENT_TIMESTAMP,
     feedback       TEXT,
-    nota_avaliacao INT CHECK (nota_avaliacao BETWEEN 1 AND 5),
+    nota_avaliacao INT CHECK (nota_avaliacao BETWEEN 1 AND 10),
     CONSTRAINT uk_usuario_vaga UNIQUE (usuario_id, vaga_id)
 );
+
+-- Garante permissão de edição/exclusão no schema public
+GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO admin;
+GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO admin;

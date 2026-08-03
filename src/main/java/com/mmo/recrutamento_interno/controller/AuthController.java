@@ -27,6 +27,6 @@ public class AuthController {
         var auth = authenticationManager.authenticate(authToken);
         var usuario = (Usuario) auth.getPrincipal();
         var token = tokenService.generateToken(usuario.getEmail());
-        return ResponseEntity.ok(new TokenResponseDTO(token, usuario.getEmail(), usuario.getPerfil().name()));
+        return ResponseEntity.ok(new TokenResponseDTO(token, usuario.getNome(), usuario.getEmail(), usuario.getPerfil().name()));
     }
 }
