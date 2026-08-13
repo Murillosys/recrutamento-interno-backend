@@ -26,7 +26,7 @@ public class AuthController {
         var authToken = new UsernamePasswordAuthenticationToken(dto.email(), dto.senha());
         var auth = authenticationManager.authenticate(authToken);
         var usuario = (Usuario) auth.getPrincipal();
-        var token = tokenService.generateToken(usuario.getEmail());
+        var token = tokenService.generateToken(usuario.getEmail(), usuario.getPerfil().name());
         return ResponseEntity.ok(new TokenResponseDTO(token, usuario.getNome(), usuario.getEmail(), usuario.getPerfil().name()));
     }
 }
