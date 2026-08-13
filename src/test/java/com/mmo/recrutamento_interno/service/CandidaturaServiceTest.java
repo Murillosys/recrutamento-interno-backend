@@ -6,6 +6,7 @@ import com.mmo.recrutamento_interno.domain.entity.Vaga;
 import com.mmo.recrutamento_interno.domain.enums.Perfil;
 import com.mmo.recrutamento_interno.domain.enums.StatusCandidatura;
 import com.mmo.recrutamento_interno.domain.enums.StatusVaga;
+import com.mmo.recrutamento_interno.dto.candidatura.AvaliacaoCandidaturaRequestDTO;
 import com.mmo.recrutamento_interno.dto.candidatura.CandidaturaResponseDTO;
 import com.mmo.recrutamento_interno.exception.BusinessException;
 import com.mmo.recrutamento_interno.exception.ResourceNotFoundException;
@@ -19,6 +20,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -131,6 +133,106 @@ class CandidaturaServiceTest {
 
         assertThrows(ResourceNotFoundException.class, () -> {
             candidaturaService.aplicarParaVaga(99L, candidato);
+        });
+
+        verify(candidaturaRepository, never()).save(any(Candidatura.class));
+    }
+
+    @Test
+    @DisplayName("Deve listar as candidaturas do candidato logado")
+    void listarMinhasCandidaturas_Sucesso() {
+        Candidatura candidatura = Candidatura.builder()
+                .id(100L)
+                .usuario(candidato)
+                .vaga(vagaAberta)
+                .status(StatusCandidatura.RECEBIDA)
+                .build();
+
+        when(candidaturaRepository.findByUsuarioIdOrderByDataAplicacaoDesc(1L)).thenReturn(List.of(candidatura));
+
+        List<CandidaturaResponseDTO> resultado = candidaturaService.listarMinhasCandidaturas(1L);
+
+        assertNotNull(resultado);
+        assertEquals(1, resultado.size());
+        assertEquals(100L, resultado.get(0).id());
+        verify(candidaturaRepository, times(1)).findByUsuarioIdOrderByDataAplicacaoDesc(1L);
+    }
+
+    @Test
+    @DisplayName("Deve listar candidaturas por vaga quando chamada por ADMIN")
+    void listarPorVaga_Sucesso() {
+        Candidatura candidatura = Candidatura.builder()
+                .id(100L)
+                .usuario(candidato)
+                .vaga(vagaAberta)
+                .status(StatusCandidatura.RECEBIDA)
+                .build();
+        when(candidaturaRepository.findByVagaId(10L)).thenReturn(List.of(candidatura));
+        List<CandidaturaResponseDTO> resultado = candidaturaService.listarPorVaga(10L);
+        assertNotNull(resultado);
+        assertEquals(1, resultado.size());
+        verify(candidaturaRepository, times(1)).findByVagaId(10L);
+    }
+
+    @Test
+    @DisplayName("Deve retornar lista vazia ao listar candidaturas de uma vaga sem registros")
+    void listarPorVaga_VagaSemCandidaturas() {
+        when(candidaturaRepository.findByVagaId(99L)).thenReturn(List.of());
+
+        List<CandidaturaResponseDTO> resultado = candidaturaService.listarPorVaga(99L);
+
+        assertNotNull(resultado);
+        assertTrue(resultado.isEmpty());
+        verify(candidaturaRepository, times(1)).findByVagaId(99L);
+    }
+
+    @Test
+    @DisplayName("Deve avaliar candidatura com sucesso quando dados válidos")
+    void avaliarCandidatura_Sucesso() {
+        Candidatura candidaturaExistente = Candidatura.builder()
+                .id(100L)
+                .usuario(candidato)
+                .vaga(vagaAberta)
+                .status(StatusCandidatura.RECEBIDA)
+                .build();
+
+        AvaliacaoCandidaturaRequestDTO dto = new AvaliacaoCandidaturaRequestDTO(
+                StatusCandidatura.APROVADO,
+                "Candidato atende aos requisitos técnicos",
+                9
+        );
+
+        when(candidaturaRepository.findById(100L)).thenReturn(Optional.of(candidaturaExistente));
+        when(candidaturaRepository.save(any(Candidatura.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        CandidaturaResponseDTO resultado = candidaturaService.avaliarCandidatura(100L, dto);
+
+        assertNotNull(resultado);
+        assertEquals(StatusCandidatura.APROVADO, resultado.status());
+        assertEquals("Candidato atende aos requisitos técnicos", resultado.feedback());
+        assertEquals(9, resultado.notaAvaliacao());
+
+        verify(candidaturaRepository, times(1)).save(candidaturaExistente);
+        verify(notificationService, times(1)).notificarFeedbackAtualizado(
+                candidato.getEmail(),
+                vagaAberta.getTitulo(),
+                "APROVADO"
+        );
+    }
+
+    @Test
+    @DisplayName("Deve lançar ResourceNotFoundException ao tentar avaliar candidatura inexistente")
+    void avaliarCandidatura_ErroCandidaturaNaoEncontrada() {
+        AvaliacaoCandidaturaRequestDTO dto = new AvaliacaoCandidaturaRequestDTO(
+                StatusCandidatura.REJEITADO,
+                "Perfil desalinhado",
+                4
+        );
+
+        when(candidaturaRepository.findById(999L)).thenReturn(Optional.empty());
+
+        assertThrows(ResourceNotFoundException.class, () -> {
+            candidaturaService.avaliarCandidatura(999L, dto);
         });
 
         verify(candidaturaRepository, never()).save(any(Candidatura.class));
