@@ -10,6 +10,16 @@ Solução backend desenvolvida para gerenciar processos de **Recrutamento Intern
 
 ---
 
+## 🖥️ Frontend / Aplicação Web
+
+Para executar e utilizar a aplicação completa (com interface gráfica e interação com este backend), é necessário rodar a interface web disponível no repositório abaixo:
+
+🔗 **Repositório Frontend:** [Recrutamento Interno Web](https://github.com/Murillosys/recrutamento-interno-web)
+
+Consulte o `README.md` do repositório frontend para obter instruções detalhadas de como instalar as dependências e subir a interface.
+
+---
+
 ## 📌 Principais Funcionalidades
 
 - **Autenticação & Segurança Stateless:** Controle de acesso baseado em perfis (`ROLE_ADMIN` e `ROLE_CANDIDATO`) via **Spring Security** e **JWT (JSON Web Token)**.
